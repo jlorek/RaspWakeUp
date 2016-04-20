@@ -36,6 +36,13 @@ namespace RaspWakeUp
             }
         }
 
+        private TimeSpan _snoozeEnd;
+        private TimeSpan _ambientEnd;
+        private bool _alarmSkip = false;
+        private bool _alarmEnabled = true;
+
+        private TimeSpan _fakeTime = new TimeSpan(7, 59, 50);
+
         private State _stateIdle;
         private State _stateAmbient;
         private State _stateRadio;
@@ -50,11 +57,21 @@ namespace RaspWakeUp
                     CurrentState = _stateRadio;
                 },
 
+                OnKeyAlarm = () =>
+                {
+                    _alarmEnabled = !_alarmEnabled;
+                },
+
                 ClockTick = (time) =>
                 {
-                    if (time > _config.Alarm)
+                    // reset alarm at midnight
+                    if (time >= _config.Alarm)
                     {
-                        CurrentState = _stateAmbient;
+                        if (_alarmEnabled && !_alarmSkip)
+                        {
+                            _alarmSkip = true;
+                            CurrentState = _stateAmbient;
+                        }
                     }
                 }
             };
@@ -63,6 +80,7 @@ namespace RaspWakeUp
             {
                 OnStateEnter = () =>
                 {
+                    _ambientEnd = _fakeTime + _config.AmbientDuration;
                     _ambient.Play();
                 },
 
@@ -83,7 +101,7 @@ namespace RaspWakeUp
 
                 ClockTick = (time) =>
                 {
-                    if (time > _config.Alarm + _config.AmbientDuration)
+                    if (time >= _ambientEnd)
                     {
                         CurrentState = _stateRadio;
                     }
@@ -123,7 +141,7 @@ namespace RaspWakeUp
                 OnStateEnter = () =>
                 {
                     //_snoozeAlarm = DateTime.Now.TimeOfDay + _config.SnoozeDuration;
-                    _snoozeAlarm = _fakeTime + _config.SnoozeDuration;
+                    _snoozeEnd = _fakeTime + _config.SnoozeDuration;
                 },
 
                 OnKeyRadio = () =>
@@ -138,7 +156,7 @@ namespace RaspWakeUp
 
                 ClockTick = (time) =>
                 {
-                    if (time > _snoozeAlarm)
+                    if (time >= _snoozeEnd)
                     {
                         CurrentState = _stateRadio;
                     }
@@ -147,9 +165,6 @@ namespace RaspWakeUp
 
             CurrentState = _stateIdle;
         }
-
-        private TimeSpan _snoozeAlarm;
-        private TimeSpan _fakeTime = new TimeSpan(7, 59, 0);
 
         public StateMachine()
         {
@@ -168,8 +183,23 @@ namespace RaspWakeUp
                     //_display.FirstLine(now.ToString("HH:mm:ss"));
 
                     _fakeTime = _fakeTime.Add(TimeSpan.FromSeconds(1));
+                    if (_fakeTime.Days == 1)
+                    {
+                        _fakeTime = new TimeSpan(0, 0, 0);
+                    }
+                    // TimeSpan.Days is incremented after 23:59:59
                     _display.FirstLine(_fakeTime.ToString(@"hh\:mm\:ss"));
                     CurrentState.ClockTick(_fakeTime);
+
+                    if (_fakeTime.Hours == 0 && _fakeTime.Minutes == 0)
+                    {
+                        _alarmSkip = false;
+                    }
+
+                    if (_fakeTime >= _config.Alarm)
+                    {
+                        _alarmSkip = true;
+                    }
 
                     await Task.Delay(1000);
                 }
