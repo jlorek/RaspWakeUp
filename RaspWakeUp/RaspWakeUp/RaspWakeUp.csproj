@@ -101,11 +101,14 @@
     <Compile Include="Components\AmbientSound.cs" />
     <Compile Include="Components\Display.cs" />
     <Compile Include="Components\InternetRadio.cs" />
+    <Compile Include="Contracts\ITimeService.cs" />
     <Compile Include="Components\PowerSockets.cs" />
+    <Compile Include="Components\TimeService.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Mocks\MockTimeService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StateMachine.cs" />
     <Compile Include="States\State.cs" />
@@ -136,6 +139,7 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
