@@ -6,7 +6,7 @@ namespace RaspWakeUp.Mocks
 {
     public class MockTimeService : ITimeService
     {
-        public Action<TimeSpan> Tick { get; set; }
+        public Action<TimeSpan> Tick { get; set; } = delegate { };
 
         public TimeSpan Now => _fakeTime;
 

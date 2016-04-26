@@ -15,6 +15,7 @@ namespace RaspWakeUp
         private Display _display = new Display();
         private Config _config = new Config();
         private ITimeService _timeService;
+        private IInput _input;
 
         private State _state = new State("Empty");
 
@@ -180,6 +181,11 @@ namespace RaspWakeUp
         private void InitComponents()
         {
             _timeService = new MockTimeService();
+
+            _input = new Input();
+            _input.KeyAlarm += () => Debug.WriteLine("State Machine Alarm!");
+            _input.KeySnooze += () => Debug.WriteLine("State Machine Snooze!");
+            _input.KeyRadio += () => Debug.WriteLine("State Machine Radio!");
         }
 
         private void ClockTick(TimeSpan time)
@@ -190,7 +196,7 @@ namespace RaspWakeUp
 
         public void OnKeyRadio()
         {
-            Debug.WriteLine("StateMachine::OnKeyRadio");
+            Debug.WriteLine("StateMachine::KeyRadio");
             CurrentState.OnKeyRadio();
         }
 
@@ -202,7 +208,7 @@ namespace RaspWakeUp
 
         public void OnKeySnooze()
         {
-            Debug.WriteLine("StateMachine::OnKeySnooze");
+            Debug.WriteLine("StateMachine::KeySnooze");
             CurrentState.OnKeySnooze();
         }
     }
