@@ -10,7 +10,7 @@ namespace RaspWakeUp.Mocks
 
         public TimeSpan Now => _fakeTime;
 
-        private TimeSpan _fakeTime = new TimeSpan(8, 0, 0);
+        private TimeSpan _fakeTime = new TimeSpan(7, 59, 50);
 
         public MockTimeService()
         {

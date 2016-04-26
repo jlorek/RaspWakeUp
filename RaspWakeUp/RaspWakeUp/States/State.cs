@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace RaspWakeUp.States
 {
@@ -11,11 +12,13 @@ namespace RaspWakeUp.States
 
         public string Name { get; private set; }
 
-        public Action OnStateEnter { get; set; } = delegate { }; 
-        public Action OnStateLeave { get; set; } = delegate { }; 
-        public Action OnKeyRadio { get; set; } = delegate { }; 
-        public Action OnKeyAlarm { get; set; } = delegate { }; 
-        public Action OnKeySnooze { get; set; } = delegate { };
-        public Action<TimeSpan> ClockTick { get; set; } = delegate { };
+        public Func<Task> StateEnter = async () => { }; 
+        public Func<Task> StateLeave = async () => { };
+
+        public Action KeyRadio { get; set; } = delegate { }; 
+        public Action KeyAlarm { get; set; } = delegate { }; 
+        public Action KeySnooze { get; set; } = delegate { };
+
+        public Func<TimeSpan, Task> ClockTick = async (time) => { };
     }
 }

@@ -103,6 +103,8 @@
     <Compile Include="Components\Input.cs" />
     <Compile Include="Components\InternetRadio.cs" />
     <Compile Include="Contracts\IInput.cs" />
+    <Compile Include="Contracts\IAmbientSound.cs" />
+    <Compile Include="Contracts\IInternetRadio.cs" />
     <Compile Include="Contracts\ITimeService.cs" />
     <Compile Include="Components\PowerSockets.cs" />
     <Compile Include="Components\TimeService.cs" />
@@ -110,6 +112,8 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Mocks\MockAmbientSound.cs" />
+    <Compile Include="Mocks\MockInternetRadio.cs" />
     <Compile Include="Mocks\MockTimeService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StateMachine.cs" />
@@ -146,6 +150,12 @@
     <SDKReference Include="WindowsIoT, Version=10.0.10240.0">
       <Name>Windows IoT Extensions for the UWP</Name>
     </SDKReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalMediaEngine\UniversalMediaEngine.vcxproj">
+      <Project>{81d46002-ec95-4423-bf6e-dbe82ccd55ca}</Project>
+      <Name>UniversalMediaEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

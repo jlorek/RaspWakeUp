@@ -2,6 +2,8 @@
 using RaspWakeUp.Components;
 using RaspWakeUp.States;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Microsoft.Maker.Media.UniversalMediaEngine;
 using RaspWakeUp.Contracts;
 using RaspWakeUp.Mocks;
 
@@ -9,34 +11,24 @@ namespace RaspWakeUp
 {
     public class StateMachine
     {
-        private AmbientSound _ambient = new AmbientSound();
-        private InternetRadio _radio = new InternetRadio();
+        private AmbientSound _ambientSound;
+        private InternetRadio _internetRadio;
         private PowerSockets _sockets = new PowerSockets();
         private Display _display = new Display();
         private Config _config = new Config();
         private ITimeService _timeService;
         private IInput _input;
+        private MediaEngine _mediaEngine;
 
         private State _state = new State("Empty");
 
-        public State CurrentState
+        public async Task SetState(State value)
         {
-            get
-            {
-                return _state;
-            }
-
-            set
-            {
-                if (_state != null)
-                {
-                    Debug.WriteLine($"Leaving State [{_state.Name}]");
-                    _state.OnStateLeave();
-                    Debug.WriteLine($"Entering State [{value.Name}]");
-                    value.OnStateEnter();
-                    _state = value;
-                }
-            }
+            Debug.WriteLine($"Leaving State [{_state.Name}]");
+            await _state.StateLeave();
+            Debug.WriteLine($"Entering State [{value.Name}]");
+            await value.StateEnter();
+            _state = value;
         }
 
         private TimeSpan _snoozeEnd;
@@ -51,34 +43,38 @@ namespace RaspWakeUp
 
         public StateMachine()
         {
-            InitComponents();
-            InitStates();
+            //Task.Factory.StartNew(async () => await Init());
+            Init();
+        }
 
-            _timeService.Tick = ClockTick;
+        private async Task Init()
+        {
+            await InitComponents();
+            InitStates();
         }
 
         private void InitStates()
         {
             _stateIdle = new State("Idle")
             {
-                OnKeyRadio = () =>
+                KeyRadio = async () =>
                 {
-                    CurrentState = _stateRadio;
+                    await SetState(_stateRadio);
                 },
 
-                OnKeyAlarm = () =>
+                KeyAlarm = () =>
                 {
                     _alarmEnabled = !_alarmEnabled;
                 },
 
-                ClockTick = (time) =>
+                ClockTick = async (time) =>
                 {
                     if (time.Hours == _config.Alarm.Hours && time.Minutes == _config.Alarm.Minutes)
                     {
                         if (!_alarmSkip)
                         {
                             _alarmSkip = true;
-                            CurrentState = _stateAmbient;
+                            await SetState(_stateAmbient);
                         }
                     }
                     else
@@ -90,126 +86,151 @@ namespace RaspWakeUp
 
             _stateAmbient = new State("Ambient")
             {
-                OnStateEnter = () =>
+                StateEnter = async () =>
                 {
                     _ambientEnd = _timeService.Now + _config.AmbientDuration;
-                    _ambient.Play();
+                    await _ambientSound.Play();
                 },
 
-                OnStateLeave = () =>
+                StateLeave = async () =>
                 {
-                    _ambient.Stop();
+                    await _ambientSound.Stop();
                 },
 
-                OnKeyAlarm = () =>
+                KeyAlarm = async () =>
                 {
-                    CurrentState = _stateIdle;
+                    await SetState(_stateIdle);
                 },
 
-                OnKeyRadio = () =>
+                KeyRadio = async () =>
                 {
-                    CurrentState = _stateRadio;
+                    await SetState(_stateRadio);
                 },
 
-                ClockTick = (time) =>
+                ClockTick = async (time) =>
                 {
                     if (time >= _ambientEnd)
                     {
-                        CurrentState = _stateRadio;
+                        await SetState(_stateRadio);
                     }
                 }
             };
 
             _stateRadio = new State("Radio")
             {
-                OnStateEnter = () =>
+                StateEnter = async () =>
                 {
-                    _radio.Play();
+                    await _internetRadio.Play();
                 },
 
-                OnStateLeave = () =>
+                StateLeave = async () =>
                 {
-                    _radio.Stop();
+                    await _internetRadio.Stop();
                 },
 
-                OnKeyRadio = () =>
+                KeyRadio = async () =>
                 {
-                    CurrentState = _stateIdle;
+                    await SetState(_stateIdle);
                 },
 
-                OnKeyAlarm = () =>
+                KeyAlarm = async () =>
                 {
-                    CurrentState = _stateIdle;
+                    await SetState(_stateIdle);
                 },
 
-                OnKeySnooze = () =>
+                KeySnooze = async () =>
                 {
-                    CurrentState = _stateSnooze;
+                    await SetState(_stateSnooze);
                 }
             };
 
             _stateSnooze = new State("Snooze")
             {
-                OnStateEnter = () =>
+                StateEnter = async () =>
                 {
                     //_snoozeAlarm = DateTime.Now.TimeOfDay + _config.SnoozeDuration;
                     _snoozeEnd = _timeService.Now + _config.SnoozeDuration;
                 },
 
-                OnKeyRadio = () =>
+                KeyRadio = async () =>
                 {
-                    CurrentState = _stateRadio;
+                    await SetState(_stateRadio);
                 },
 
-                OnKeyAlarm = () =>
+                KeyAlarm = async () =>
                 {
-                    CurrentState = _stateIdle;
+                    await SetState(_stateIdle);
                 },
 
-                ClockTick = (time) =>
+                ClockTick = async (time) =>
                 {
                     if (time >= _snoozeEnd)
                     {
-                        CurrentState = _stateRadio;
+                        await SetState(_stateRadio);
                     }
                 }
             };
 
-            CurrentState = _stateIdle;
+            SetState(_stateIdle);
         }
 
-        private void InitComponents()
+        private async Task InitComponents()
         {
+            _mediaEngine = new MediaEngine();
+            _mediaEngine.MediaStateChanged += MediaEngineOnMediaStateChanged; 
+            var result = await _mediaEngine.InitializeAsync();
+
+            if (result == MediaEngineInitializationResult.Fail)
+            {
+                Debugger.Break();
+                return;
+            }
+            else
+            {
+                //_mediaEngine.Play("http://uwstream1.somafm.com:80");
+                //_mediaEngine.Play("http://ice.somafm.com/groovesalad");
+                //return;
+            }
+
+            _ambientSound = new AmbientSound(_mediaEngine);
+            _internetRadio = new InternetRadio(_mediaEngine);
+
             _timeService = new MockTimeService();
+            _timeService.Tick = ClockTick;
 
             _input = new Input();
-            _input.KeyAlarm += () => Debug.WriteLine("State Machine Alarm!");
-            _input.KeySnooze += () => Debug.WriteLine("State Machine Snooze!");
-            _input.KeyRadio += () => Debug.WriteLine("State Machine Radio!");
+            _input.KeyAlarm += OnKeyAlarm;
+            _input.KeySnooze += OnKeySnooze;
+            _input.KeyRadio += OnKeyRadio;
+        }
+
+        private void MediaEngineOnMediaStateChanged(MediaState state)
+        {
+            Debug.WriteLine("MediaEngine State Changed " + state);
         }
 
         private void ClockTick(TimeSpan time)
         {
             _display.FirstLine(time.ToString(@"hh\:mm\:ss"));
-            CurrentState.ClockTick(time);
+            _state.ClockTick(time);
         }
 
         public void OnKeyRadio()
         {
             Debug.WriteLine("StateMachine::KeyRadio");
-            CurrentState.OnKeyRadio();
+            _state.KeyRadio();
         }
 
         public void OnKeyAlarm()
         {
-            Debug.WriteLine("StateMachine::OnKeyAlarm");
-            CurrentState.OnKeyAlarm();
+            Debug.WriteLine("StateMachine::KeyAlarm");
+            _state.KeyAlarm();
         }
 
         public void OnKeySnooze()
         {
             Debug.WriteLine("StateMachine::KeySnooze");
-            CurrentState.OnKeySnooze();
+            _state.KeySnooze();
         }
     }
 }

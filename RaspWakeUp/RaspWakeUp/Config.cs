@@ -11,7 +11,7 @@ namespace RaspWakeUp
         public Config()
         {
             Alarm = new TimeSpan(8, 0, 0);
-            AmbientDuration = new TimeSpan(0, 0, 10);
+            AmbientDuration = new TimeSpan(0, 0, 15);
             SnoozeDuration = new TimeSpan(0, 0, 5);
         }
     }
