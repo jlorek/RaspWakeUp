@@ -4,8 +4,10 @@ namespace RaspWakeUp.Contracts
 {
     public interface IInput
     {
-        event Action KeyAlarm;// { get; set; }
-        event Action KeyRadio;// { get; set; }
-        event Action KeySnooze;// { get; set; }
+        event Action KeyPause;
+        event Action KeyTime;
+        event Action KeySleep;
+        event Action KeyForward;
+        event Action KeyFastForward;
     }
 }

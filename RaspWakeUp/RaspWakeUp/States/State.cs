@@ -12,13 +12,13 @@ namespace RaspWakeUp.States
 
         public string Name { get; private set; }
 
-        public Func<Task> StateEnter = async () => { }; 
-        public Func<Task> StateLeave = async () => { };
+        public Func<Task> StateEnter = () => Task.CompletedTask; 
+        public Func<Task> StateLeave = () => Task.CompletedTask;
 
         public Action KeyRadio { get; set; } = delegate { }; 
         public Action KeyAlarm { get; set; } = delegate { }; 
         public Action KeySnooze { get; set; } = delegate { };
 
-        public Func<TimeSpan, Task> ClockTick = async (time) => { };
+        public Func<TimeSpan, Task> ClockTick = (time) => Task.CompletedTask;
     }
 }

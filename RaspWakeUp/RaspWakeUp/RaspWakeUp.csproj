@@ -102,6 +102,7 @@
     <Compile Include="Components\Display.cs" />
     <Compile Include="Components\Input.cs" />
     <Compile Include="Components\InternetRadio.cs" />
+    <Compile Include="Contracts\IDisplay.cs" />
     <Compile Include="Contracts\IInput.cs" />
     <Compile Include="Contracts\IAmbientSound.cs" />
     <Compile Include="Contracts\IInternetRadio.cs" />
@@ -113,6 +114,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Mocks\MockAmbientSound.cs" />
+    <Compile Include="Mocks\MockDisplay.cs" />
     <Compile Include="Mocks\MockInternetRadio.cs" />
     <Compile Include="Mocks\MockTimeService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -152,6 +154,10 @@
     </SDKReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\TextDisplayManager\TextDisplay.csproj">
+      <Project>{060399d9-871d-4a17-a249-a12b9d3f7682}</Project>
+      <Name>TextDisplay</Name>
+    </ProjectReference>
     <ProjectReference Include="..\UniversalMediaEngine\UniversalMediaEngine.vcxproj">
       <Project>{81d46002-ec95-4423-bf6e-dbe82ccd55ca}</Project>
       <Name>UniversalMediaEngine</Name>

@@ -7,17 +7,23 @@ namespace RaspWakeUp.Components
 {
     public class Input : IInput
     {
-        private const int GpioPinAlarm = 16;
-        private const int GpioPinSnooze = 20;
-        private const int GpioPinRadio = 21;
+        private const int GpioPinPause = 18;
+        private const int GpioPinTime = 23;
+        private const int GpioPinSleep = 24;
+        private const int GpioPinForward = 25;
+        private const int GpioPinFastForward = 12;
 
-        public event Action KeyAlarm = delegate { }; // { get; set; } = delegate { };
-        public event Action KeySnooze = delegate { }; // { get; set; } = delegate { };
-        public event Action KeyRadio = delegate { }; // { get; set; } = delegate { };
+        public event Action KeyPause = delegate { };
+        public event Action KeyTime = delegate { };
+        public event Action KeySleep = delegate { };
+        public event Action KeyForward = delegate { };
+        public event Action KeyFastForward = delegate { };
 
-        private readonly GpioPin _alarmPin;
-        private readonly GpioPin _snoozePin;
-        private readonly GpioPin _radioPin;
+        private readonly GpioPin _pinPause;
+        private readonly GpioPin _pinTime;
+        private readonly GpioPin _pinSleep;
+        private readonly GpioPin _pinForward;
+        private readonly GpioPin _pinFastForward;
 
         public Input()
         {
@@ -25,9 +31,11 @@ namespace RaspWakeUp.Components
 
             if (gpio != null)
             {
-                _alarmPin = SetupPin(gpio, GpioPinAlarm, () => KeyAlarm());
-                _snoozePin = SetupPin(gpio, GpioPinSnooze, () => KeySnooze());
-                _radioPin = SetupPin(gpio, GpioPinRadio, () => KeyRadio());
+                _pinPause = SetupPin(gpio, GpioPinPause, () => KeyPause());
+                _pinTime = SetupPin(gpio, GpioPinTime, () => KeyTime());
+                _pinSleep = SetupPin(gpio, GpioPinSleep, () => KeySleep());
+                _pinForward = SetupPin(gpio, GpioPinForward, () => KeyForward());
+                _pinFastForward = SetupPin(gpio, GpioPinFastForward, () => KeyFastForward());
             }
             else
             {
@@ -38,11 +46,11 @@ namespace RaspWakeUp.Components
         private GpioPin SetupPin(GpioController gpio, int pin, Action action)
         {
             GpioPin gpioPin = gpio.OpenPin(pin);
-            gpioPin.SetDriveMode(GpioPinDriveMode.InputPullUp);
+            gpioPin.SetDriveMode(GpioPinDriveMode.InputPullDown);
             gpioPin.DebounceTimeout = TimeSpan.FromMilliseconds(50);
             gpioPin.ValueChanged += (sender, args) =>
             {
-                if (args.Edge == GpioPinEdge.FallingEdge)
+                if (args.Edge == GpioPinEdge.RisingEdge)
                 {
                     action();
                 }

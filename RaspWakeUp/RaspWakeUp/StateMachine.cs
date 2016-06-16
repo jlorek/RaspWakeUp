@@ -14,7 +14,7 @@ namespace RaspWakeUp
         private AmbientSound _ambientSound;
         private InternetRadio _internetRadio;
         private PowerSockets _sockets = new PowerSockets();
-        private Display _display = new Display();
+        private IDisplay _display;
         private Config _config = new Config();
         private ITimeService _timeService;
         private IInput _input;
@@ -50,10 +50,10 @@ namespace RaspWakeUp
         private async Task Init()
         {
             await InitComponents();
-            InitStates();
+            await InitStates();
         }
 
-        private void InitStates()
+        private async Task InitStates()
         {
             _stateIdle = new State("Idle")
             {
@@ -146,10 +146,11 @@ namespace RaspWakeUp
 
             _stateSnooze = new State("Snooze")
             {
-                StateEnter = async () =>
+                StateEnter = () =>
                 {
                     //_snoozeAlarm = DateTime.Now.TimeOfDay + _config.SnoozeDuration;
                     _snoozeEnd = _timeService.Now + _config.SnoozeDuration;
+                    return Task.CompletedTask;
                 },
 
                 KeyRadio = async () =>
@@ -171,11 +172,15 @@ namespace RaspWakeUp
                 }
             };
 
-            SetState(_stateIdle);
+            await SetState(_stateIdle);
         }
 
         private async Task InitComponents()
         {
+            //_display = new MockDisplay();
+            _display = new Display();
+            await _display.Init();
+
             _mediaEngine = new MediaEngine();
             _mediaEngine.MediaStateChanged += MediaEngineOnMediaStateChanged; 
             var result = await _mediaEngine.InitializeAsync();
@@ -189,6 +194,7 @@ namespace RaspWakeUp
             {
                 //_mediaEngine.Play("http://uwstream1.somafm.com:80");
                 //_mediaEngine.Play("http://ice.somafm.com/groovesalad");
+                //_mediaEngine.Play("ms-appx:///Content/birds.mp3");
                 //return;
             }
 
@@ -199,9 +205,11 @@ namespace RaspWakeUp
             _timeService.Tick = ClockTick;
 
             _input = new Input();
-            _input.KeyAlarm += OnKeyAlarm;
-            _input.KeySnooze += OnKeySnooze;
-            _input.KeyRadio += OnKeyRadio;
+            _input.KeyPause += () => Debug.WriteLine("StateMachine::KeyPause");
+            _input.KeyTime += () => Debug.WriteLine("StateMachine::KeyTime");
+            _input.KeySleep += () => Debug.WriteLine("StateMachine::KeySleep");
+            _input.KeyForward += () => Debug.WriteLine("StateMachine::KeyForward");
+            _input.KeyFastForward += () => Debug.WriteLine("StateMachine::KeyFastForward");
         }
 
         private void MediaEngineOnMediaStateChanged(MediaState state)
